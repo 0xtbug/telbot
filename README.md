@@ -80,7 +80,7 @@ This repository includes official support for [OpenClaw](https://github.com/0xtb
 **Prompt your AI with:**
 ```text
 Please load and use this telbot Skill:
-https://raw.githubusercontent.com/0xtbug/telbot/main/openclaw/SKILL.md
+https://raw.githubusercontent.com/0xtbug/telbot/main/telbot-skills/SKILL.md
 ```
 
 ## Documentation
