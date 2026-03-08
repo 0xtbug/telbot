@@ -34,33 +34,32 @@ go run . --cli       # Terminal UI
 go run . --mcp       # MCP server
 ```
 
-## Install Globally
-
-Install as `telbot` command available from anywhere:
-
-```bash
-go build -o "$GOPATH/bin/telbot" -ldflags "-s -w" .
-```
-
-> **Windows (PowerShell):**
->
-> To install the executable in your system-wide Go bin directory, run PowerShell **as Administrator** and execute:
-> ```powershell
-> go build -o "C:\Program Files\Go\bin\telbot.exe" -ldflags "-s -w" .
-> ```
-> *(Note: You must have Administrator privileges to write to `C:\Program Files`)*
-
-Then use from any directory:
-
-```bash
-telbot --bot
-telbot --cli
-telbot --mcp
-```
-
-### Pre-built Binaries (GitHub Releases)
+## Installation (Pre-built Binaries)
 
 If you don't want to install Go or build it yourself, you can download the pre-compiled executables for Windows, Linux, and macOS directly from the **[Releases](https://github.com/0xtbug/telbot/releases)** page of this repository.
+
+To install the binary globally so you can run `telbot` from any folder:
+
+**Linux / macOS:**
+1. Download the appropriate binary from the Releases page.
+2. Make the file executable:
+   ```bash
+   chmod +x telbot-linux-amd64  # Replace with your downloaded file name
+   ```
+3. Move it to your global bin directory:
+   ```bash
+   sudo mv telbot-linux-amd64 /usr/local/bin/telbot
+   ```
+4. You can now run `telbot` from anywhere in your terminal.
+
+**Windows:**
+1. Download the Windows `.exe` executable from the Releases page.
+2. Rename the downloaded file to `telbot.exe`.
+3. Move it to a permanent folder, for example `C:\telbot\`.
+4. Open the Windows Start menu, search for **Edit the system environment variables**, and open it.
+5. Click **Environment Variables**, find **Path** in the System variables list, and click **Edit**.
+6. Click **New**, add `C:\telbot\`, and click **OK** to save everything.
+7. You can now run `telbot` from any new PowerShell or Command Prompt window.
 
 ## Environment Variables
 
