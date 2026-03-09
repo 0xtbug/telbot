@@ -91,8 +91,12 @@ See the [docs/](docs/) folder for detailed guides:
 - [CLI Mode](docs/cli.md)
 - [MCP Server](docs/mcp-server.md)
 - [Running as Systemd Service (Linux)](docs/systemd.md)
-- [OpenClaw Skill](openclaw/SKILL.md)
+- [OpenClaw Skill](telbot-skills/SKILL.md)
 
-## Disclaimer ⚠️
+## Disclaimer 
 
-This application uses unofficial, reverse-engineered MyTelkomsel API endpoints. Subject to change without warning. Use at your own risk.
+This project is an unofficial tool that interacts with MyTelkomsel web services for personal automation purposes.
+
+It does not modify, bypass, or exploit any security mechanisms of the MyTelkomsel platform. All requests are performed using standard HTTP interactions similar to those made by the official web interface.
+
+This project is intended for educational and personal use only. Use at your own risk.
