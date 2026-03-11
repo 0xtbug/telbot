@@ -17,6 +17,8 @@ import (
 	"telkomsel-bot/model"
 )
 
+var version = "dev"
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -34,6 +36,8 @@ func main() {
 		cli.Run()
 	case "--mcp":
 		mcp.Run()
+	case "--version", "-v":
+		fmt.Printf("telbot %s\n", version)
 	case "--help", "-h":
 		printHelp()
 	default:
@@ -45,7 +49,7 @@ func main() {
 
 func printHelp() {
 	fmt.Println("╔══════════════════════════════════╗")
-	fmt.Println("║           🔰 Telbot              ║")
+	fmt.Printf("║          Telbot %-17s║\n", version)
 	fmt.Println("╚══════════════════════════════════╝")
 	fmt.Println()
 	fmt.Println("Usage:")

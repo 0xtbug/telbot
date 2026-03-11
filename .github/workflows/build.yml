@@ -43,7 +43,7 @@ jobs:
           if [ "${{ matrix.goos }}" = "windows" ]; then
             EXT=".exe"
           fi
-          go build -ldflags "-s -w" -o build/telbot-${{ matrix.goos }}-${{ matrix.goarch }}$EXT .
+          go build -ldflags "-s -w -X main.version=${{ github.ref_name }}" -o build/telbot-${{ matrix.goos }}-${{ matrix.goarch }}$EXT .
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
