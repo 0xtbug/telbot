@@ -94,7 +94,7 @@ chmod +x /etc/init.d/telbot
 /etc/init.d/telbot start
 ```
 
-## 5. Log Monitoring
+## 4. Log Monitoring
 
 Check the system logs to see if the bot is running correctly:
 ```bash
