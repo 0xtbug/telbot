@@ -13,6 +13,7 @@ import (
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
 	qrterminal "github.com/mdp/qrterminal/v3"
+	"telkomsel-bot/util"
 )
 
 var (
@@ -55,7 +56,7 @@ var (
 func (m tuiModel) View() string {
 	var b strings.Builder
 
-	b.WriteString(titleStyle.Render("Telbot"))
+	b.WriteString(titleStyle.Render("Telbot", util.GetVersion()))
 	b.WriteString("\n")
 
 	switch m.screen {

@@ -79,8 +79,6 @@ func (m tuiModel) selectMenu(selected string) (tea.Model, tea.Cmd) {
 		m.message = "✓ Sudah logout."
 		m.cursor = 0
 		return m, nil
-	case "Keluar":
-		return m, tea.Quit
 	}
 	return m, nil
 }
@@ -97,7 +95,7 @@ func (m tuiModel) updateLogin(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.loginPhone = local
 			m.screen = screenLoading
-			m.loading = "Membuka browser untuk login..."
+			m.loading = "Proses login..."
 			return m, m.doLogin(local)
 		}
 	}
@@ -385,9 +383,9 @@ func (m tuiModel) updateSchedulePayment(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m tuiModel) getMenuItems() []string {
 	if m.loggedInUser != nil {
-		return []string{"Cek Profil", "Cek Kuota", "Beli Paket", "Schedule Auto-Buy", "Logout", "Keluar"}
+		return []string{"Cek Profil", "Cek Kuota", "Beli Paket", "Schedule Auto-Buy", "Logout"}
 	}
-	return []string{"Login", "Keluar"}
+	return []string{"Login"}
 }
 
 func (m tuiModel) viewMenu() string {

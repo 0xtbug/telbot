@@ -21,7 +21,7 @@ func (h *Handler) handlePhoneInput(b *gotgbot.Bot, ctx *ext.Context, userID int6
 		return replyErr
 	}
 
-	_, _ = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("📱 Login: +%s\n\n🔄 Membuka browser...", full), nil)
+	_, _ = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("📱 Login: +%s\n\n🔄 Proses login...", full), nil)
 
 	otpChan := make(chan string, 1)
 	h.otpChansMu.Lock()
@@ -57,6 +57,15 @@ func (h *Handler) handlePhoneInput(b *gotgbot.Bot, ctx *ext.Context, userID int6
 		return replyErr
 	}
 
+	existing := h.sessions.Get(userID)
+	if existing != nil {
+		session.AutoBuyInterval = existing.AutoBuyInterval
+		session.AutoBuyPackage = existing.AutoBuyPackage
+		session.AutoBuyPayment = existing.AutoBuyPayment
+		session.AutoBuyActive = existing.AutoBuyActive
+		session.PendingOfferID = existing.PendingOfferID
+		session.PendingPayment = existing.PendingPayment
+	}
 	h.sessions.Set(userID, session)
 
 	profile, profileErr := h.api.GetFullProfile(context.Background(), session)

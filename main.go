@@ -15,9 +15,8 @@ import (
 	"telkomsel-bot/config"
 	"telkomsel-bot/mcp"
 	"telkomsel-bot/model"
+	"telkomsel-bot/util"
 )
-
-var version = "dev"
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -37,7 +36,7 @@ func main() {
 	case "--mcp":
 		mcp.Run()
 	case "--version", "-v":
-		fmt.Printf("telbot %s\n", version)
+		fmt.Printf("telbot %s\n", util.GetVersion())
 	case "--help", "-h":
 		printHelp()
 	default:
@@ -49,7 +48,7 @@ func main() {
 
 func printHelp() {
 	fmt.Println("╔══════════════════════════════════╗")
-	fmt.Printf("║          Telbot %-17s║\n", version)
+	fmt.Printf("║          Telbot %-17s║\n", util.GetVersion())
 	fmt.Println("╚══════════════════════════════════╝")
 	fmt.Println()
 	fmt.Println("Usage:")

@@ -63,6 +63,17 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.loggedInID == 0 {
 			m.loggedInID = 1
 		}
+
+		existing := m.sessions.Get(m.loggedInID)
+		if existing != nil {
+			msg.session.AutoBuyInterval = existing.AutoBuyInterval
+			msg.session.AutoBuyPackage = existing.AutoBuyPackage
+			msg.session.AutoBuyPayment = existing.AutoBuyPayment
+			msg.session.AutoBuyActive = existing.AutoBuyActive
+			msg.session.PendingOfferID = existing.PendingOfferID
+			msg.session.PendingPayment = existing.PendingPayment
+		}
+
 		m.sessions.Set(m.loggedInID, msg.session)
 		m.loggedInUser = msg.session
 		m.screen = screenMenu
