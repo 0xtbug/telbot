@@ -90,10 +90,11 @@ See the [docs/](docs/) folder for detailed guides:
 - [Telegram Bot](docs/telegram-bot.md)
 - [CLI Mode](docs/cli.md)
 - [MCP Server](docs/mcp-server.md)
-- [Running as Systemd Service (Linux)](docs/systemd.md)
+- [Systemd Service (Linux)](docs/systemd.md)
+- [OpenWrt](docs/openwrt.md)
 - [OpenClaw Skill](telbot-skills/SKILL.md)
 
-## Disclaimer 
+## Disclaimer
 
 This project is an unofficial tool that interacts with MyTelkomsel web services for personal automation purposes.
 
