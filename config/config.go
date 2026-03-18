@@ -33,8 +33,15 @@ const (
 	OfferId        = "0fc00fd41bcd26376d806925d746705e"
 	DefaultPayment = "qris"
 	MaxRetries     = 3
-	WebAppVersion  = "2.0.0"
-	ChromePreset   = "chrome-145"
+	WebAppVersion      = "2.0.0"
+	ChromePreset       = "chrome-145"
+	CiamBaseURL        = "https://ciam.telkomsel.com"
+	CiamRealm          = "tsel"
+	ClientID           = "e7126474617aa39eb9e484233c9b0649"
+	ClientSecret       = "P@ssw0rd"
+	RedirectURI        = "https://my.telkomsel.com/web/callback"
+	AuthUserAgent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+	EncryptionPassword = "production"
 )
 
 var Verbose bool

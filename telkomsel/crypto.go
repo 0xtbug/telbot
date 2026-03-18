@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"telkomsel-bot/config"
 	"time"
 )
 
@@ -29,7 +30,7 @@ func evpBytesToKey(password string, keyLen, ivLen int) (key, iv []byte) {
 
 func EncryptPayload(payload string) string {
 	_ = hex.EncodeToString([]byte(payload))
-	key, iv := evpBytesToKey("production", 16, 16)
+	key, iv := evpBytesToKey(config.EncryptionPassword, 16, 16)
 
 	block, err := aes.NewCipher(key)
 	if err != nil {

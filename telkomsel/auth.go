@@ -46,8 +46,8 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		},
 	}
 
-	userAgent := []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"}
-	clientID := "e7126474617aa39eb9e484233c9b0649"
+	userAgent := []string{config.AuthUserAgent}
+	clientID := config.ClientID
 
 	log.Println("[Login] Requesting OTP...")
 	reqBody1 := []byte("")
@@ -56,8 +56,8 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		"Accept":           []string{"application/json"},
 		"Dnt":              []string{"1"},
 		"Sec-Ch-Ua-Mobile": []string{"?0"},
-		"Origin":           []string{"https://my.telkomsel.com"},
-		"Referer":          []string{"https://my.telkomsel.com/"},
+		"Origin":           []string{config.LoginURL},
+		"Referer":          []string{config.LoginURL + "/"},
 		"Sec-Fetch-Site":   []string{"same-site"},
 		"Sec-Fetch-Mode":   []string{"cors"},
 		"Sec-Fetch-Dest":   []string{"empty"},
@@ -71,7 +71,7 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		"Priority":         []string{"u=1, i"},
 	}
 
-	authURL := "https://ciam.telkomsel.com/iam/v1/realms/tsel/authenticate?authIndexType=service&authIndexValue=phoneLogin"
+	authURL := fmt.Sprintf("%s/iam/v1/realms/%s/authenticate?authIndexType=service&authIndexValue=phoneLogin", config.CiamBaseURL, config.CiamRealm)
 
 	req1, _ := http.NewRequestWithContext(ctx, "POST", authURL, bytes.NewReader(reqBody1))
 	req1.Header = headers1
@@ -136,9 +136,9 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		"Accept":       []string{"application/json"},
 		"Dnt":          []string{"1"},
 		"Sec-Ch-Ua-Mobile": []string{"?0"},
-		"Origin":       []string{"https://my.telkomsel.com"},
-		"Referer":      []string{"https://my.telkomsel.com/"},
-		"Am-Clientid":  []string{clientID},
+		"Origin":       []string{config.LoginURL},
+		"Referer":      []string{config.LoginURL + "/"},
+		"Am-Clientid":  []string{config.ClientID},
 		"Content-Type": []string{"application/json"},
 		"Sec-Fetch-Site":   []string{"same-site"},
 		"Sec-Fetch-Mode":   []string{"cors"},
@@ -184,17 +184,17 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 
 	log.Println("[Login] Authorizing...")
 	authzParams := url.Values{}
-	authzParams.Add("client_id", clientID)
+	authzParams.Add("client_id", config.ClientID)
 	authzParams.Add("nonce", "true")
-	authzParams.Add("redirect_uri", "https://my.telkomsel.com/web/callback")
+	authzParams.Add("redirect_uri", config.RedirectURI)
 	authzParams.Add("response_type", "code")
 	authzParams.Add("scope", "profile openid phone identifier")
 
-	authzURL := "https://ciam.telkomsel.com/iam/v1/oauth2/realms/tsel/authorize?" + authzParams.Encode()
+	authzURL := fmt.Sprintf("%s/iam/v1/oauth2/realms/%s/authorize?%s", config.CiamBaseURL, config.CiamRealm, authzParams.Encode())
 	headers3 := http.Header{
 		"User-Agent": userAgent,
 		"Accept":     []string{"application/json"},
-		"Referer":    []string{"https://my.telkomsel.com/"},
+		"Referer":    []string{config.LoginURL + "/"},
 		"Dnt":        []string{"1"},
 		"Sec-Ch-Ua-Mobile": []string{"?0"},
 		"Sec-Ch-Ua":        []string{`"Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"`},
@@ -238,20 +238,20 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 
 	log.Println("[Login] Requesting access token...")
 	tokenParams := url.Values{}
-	tokenParams.Add("client_id", clientID)
-	tokenParams.Add("client_secret", "P@ssw0rd")
+	tokenParams.Add("client_id", config.ClientID)
+	tokenParams.Add("client_secret", config.ClientSecret)
 	tokenParams.Add("code", code)
 	tokenParams.Add("grant_type", "authorization_code")
-	tokenParams.Add("redirect_uri", "https://my.telkomsel.com/web/callback")
+	tokenParams.Add("redirect_uri", config.RedirectURI)
 	tokenParams.Add("response_type", "code")
 
-	tokenURL := "https://ciam.telkomsel.com/iam/v1/oauth2/realms/tsel/access_token?" + tokenParams.Encode()
+	tokenURL := fmt.Sprintf("%s/iam/v1/oauth2/realms/%s/access_token?%s", config.CiamBaseURL, config.CiamRealm, tokenParams.Encode())
 
 	headers4 := http.Header{
 		"User-Agent":     userAgent,
 		"Accept":         []string{"application/json"},
-		"Origin":         []string{"https://my.telkomsel.com"},
-		"Referer":        []string{"https://my.telkomsel.com/"},
+		"Origin":         []string{config.LoginURL},
+		"Referer":        []string{config.LoginURL + "/"},
 		"Content-Type":   []string{"application/x-www-form-urlencoded"},
 		"Content-Length": []string{"0"},
 		"Dnt":            []string{"1"},
