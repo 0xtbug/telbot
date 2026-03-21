@@ -7,7 +7,7 @@ For Linux servers, the best way to run Telbot in `--bot` or `--mcp` mode continu
 Get the latest binary from the releases page.
 
 ```bash
-wget https://github.com/0xtbug/telbot/releases/download/latest/telbot-linux-amd64
+wget https://github.com/0xtbug/telbot/releases/latest/download/telbot-linux-amd64
 ```
 
 Move your `telbot` binary to a global location so the system can access it easily.
