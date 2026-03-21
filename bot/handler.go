@@ -174,6 +174,23 @@ func (h *Handler) handleCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 			h.sessions.Set(userID, session)
 		}
 
+	case data == "auto_thresh_0":
+		h.cbSetAutoThreshold(b, chatID, msgID, userID, 0)
+
+	case data == "auto_thresh_100":
+		h.cbSetAutoThreshold(b, chatID, msgID, userID, 100)
+
+	case data == "auto_thresh_200":
+		h.cbSetAutoThreshold(b, chatID, msgID, userID, 200)
+
+	case data == "auto_thresh_custom":
+		h.editMsg(b, chatID, msgID, "⌨️ Kirim batas minimum kuota dalam MB.\n\nContoh: `500`", nil)
+		session := h.sessions.Get(userID)
+		if session != nil {
+			session.State = model.StateAwaitingAutoThreshold
+			h.sessions.Set(userID, session)
+		}
+
 	case data == "auto_pkg_ilmupedia":
 		h.cbSetAutoPackage(b, chatID, msgID, userID, "ilmupedia")
 
@@ -243,8 +260,31 @@ func (h *Handler) handleMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 		session.AutoBuyInterval = minutes
 		h.sessions.Set(userID, session)
 
+		kb := kbAutoThreshold()
+		_, err := ctx.EffectiveMessage.Reply(b, fmt.Sprintf("✅ Interval: *%d menit*\n\n📉 Pilih batas minimum kuota untuk auto-buy:", minutes), &gotgbot.SendMessageOpts{
+			ParseMode:   "Markdown",
+			ReplyMarkup: kb,
+		})
+		return err
+	}
+
+	if session != nil && session.State == model.StateAwaitingAutoThreshold {
+		session.State = model.StateIdle
+		mb, parseErr := strconv.Atoi(text)
+		if parseErr != nil || mb < 0 {
+			_, err := ctx.EffectiveMessage.Reply(b, "❌ Masukkan angka yang valid (dalam MB).\n\nContoh: `500`", &gotgbot.SendMessageOpts{ParseMode: "Markdown"})
+			return err
+		}
+		session.AutoBuyThreshold = mb
+		h.sessions.Set(userID, session)
+
+		threshStr := fmt.Sprintf("< %d MB", mb)
+		if mb == 0 {
+			threshStr = "Habis (0 MB)"
+		}
+
 		kb := kbAutoPackage()
-		_, err := ctx.EffectiveMessage.Reply(b, fmt.Sprintf("✅ Interval: *%d menit*\n\n📦 Pilih paket untuk auto-buy:", minutes), &gotgbot.SendMessageOpts{
+		_, err := ctx.EffectiveMessage.Reply(b, fmt.Sprintf("✅ Interval: *%d menit*\n📉 Batas Kuota: *%s*\n\n📦 Pilih paket untuk auto-buy:", session.AutoBuyInterval, threshStr), &gotgbot.SendMessageOpts{
 			ParseMode:   "Markdown",
 			ReplyMarkup: kb,
 		})
@@ -256,8 +296,13 @@ func (h *Handler) handleMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 		session.AutoBuyPackage = text
 		h.sessions.Set(userID, session)
 
+		threshStr := fmt.Sprintf("< %d MB", session.AutoBuyThreshold)
+		if session.AutoBuyThreshold == 0 {
+			threshStr = "Habis (0 MB)"
+		}
+
 		kb := kbAutoPay()
-		_, err := ctx.EffectiveMessage.Reply(b, fmt.Sprintf("✅ Interval: *%d menit*\n📦 Paket: *%s*\n\n💳 Pembayaran via:", session.AutoBuyInterval, text), &gotgbot.SendMessageOpts{
+		_, err := ctx.EffectiveMessage.Reply(b, fmt.Sprintf("✅ Interval: *%d menit*\n📉 Batas Kuota: *%s*\n📦 Paket: *%s*\n\n💳 Pembayaran via:", session.AutoBuyInterval, threshStr, text), &gotgbot.SendMessageOpts{
 			ParseMode:   "Markdown",
 			ReplyMarkup: kb,
 		})

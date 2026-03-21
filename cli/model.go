@@ -27,6 +27,7 @@ const (
 	screenPaymentPoll
 	screenScheduleMenu
 	screenScheduleInterval
+	screenScheduleThreshold
 	screenScheduleOfferID
 	screenSchedulePayment
 	screenError
@@ -96,6 +97,7 @@ type tuiModel struct {
 	qrString    string
 
 	schInterval string
+	schThreshold string
 	schOfferID  string
 	schPayment  string
 }

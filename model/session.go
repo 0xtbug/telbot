@@ -15,15 +15,16 @@ const (
 	StateIdle              SessionState = ""
 	StateAwaitingPhone     SessionState = "awaiting_phone"
 	StateAwaitingOfferID   SessionState = "awaiting_offer_id"
-	StateAwaitingAutoInt   SessionState = "awaiting_auto_interval"
-	StateAwaitingAutoOffer SessionState = "awaiting_auto_offer_id"
-	StateLoggedIn          SessionState = "logged_in"
-	StateLoggingIn         SessionState = "logging_in"
+	StateAwaitingAutoInt       SessionState = "awaiting_auto_interval"
+	StateAwaitingAutoThreshold SessionState = "awaiting_auto_threshold"
+	StateAwaitingAutoOffer     SessionState = "awaiting_auto_offer_id"
+	StateLoggedIn              SessionState = "logged_in"
+	StateLoggingIn             SessionState = "logging_in"
 )
 
 func (s SessionState) IsAwaiting() bool {
 	switch s {
-	case StateAwaitingPhone, StateAwaitingOfferID, StateAwaitingAutoInt, StateAwaitingAutoOffer:
+	case StateAwaitingPhone, StateAwaitingOfferID, StateAwaitingAutoInt, StateAwaitingAutoThreshold, StateAwaitingAutoOffer:
 		return true
 	}
 	return false
@@ -43,10 +44,11 @@ type Session struct {
 	PendingOfferID string `json:"pending_offer_id,omitempty"`
 	PendingPayment string `json:"pending_payment,omitempty"`
 
-	AutoBuyInterval int    `json:"auto_buy_interval"`
-	AutoBuyPackage  string `json:"auto_buy_package"`
-	AutoBuyPayment  string `json:"auto_buy_payment"`
-	AutoBuyActive   bool   `json:"auto_buy_active"`
+	AutoBuyInterval  int    `json:"auto_buy_interval"`
+	AutoBuyThreshold int    `json:"auto_buy_threshold"`
+	AutoBuyPackage   string `json:"auto_buy_package"`
+	AutoBuyPayment   string `json:"auto_buy_payment"`
+	AutoBuyActive    bool   `json:"auto_buy_active"`
 }
 
 func (s *Session) IsLoggedIn() bool {

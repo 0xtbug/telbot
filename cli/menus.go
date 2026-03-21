@@ -257,7 +257,7 @@ func (m tuiModel) updateScheduleMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.loggedInUser != nil && m.loggedInUser.AutoBuyActive {
 		status = "Aktif"
 	}
-	items := []string{"Status: " + status, "Ubah Jadwal", "Ubah Offer ID", "Ubah Payment", "Kembali"}
+	items := []string{"Status: " + status, "Ubah Jadwal", "Ubah Threshold", "Ubah Offer ID", "Ubah Payment", "Kembali"}
 	if key, ok := msg.(tea.KeyMsg); ok {
 		switch key.String() {
 		case "up", "k":
@@ -286,20 +286,46 @@ func (m tuiModel) updateScheduleMenu(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.input.Placeholder = "Misal: 10, 30, 60 (menit)"
 				m.input.Focus()
 			case 2:
+				m.screen = screenScheduleThreshold
+				m.input.SetValue("")
+				m.input.Placeholder = "Misal: 0 (Habis), 100, 200 (MB)"
+				m.input.Focus()
+			case 3:
 				m.screen = screenScheduleOfferID
 				m.input.SetValue("")
 				m.input.Placeholder = "Offer ID dari web..."
 				m.input.Focus()
-			case 3:
+			case 4:
 				m.screen = screenSchedulePayment
 				m.cursor = 0
-			case 4:
+			case 5:
 				m.screen = screenMenu
 				m.cursor = 0
 			}
 		}
 	}
 	return m, nil
+}
+
+func (m tuiModel) updateScheduleThreshold(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if key, ok := msg.(tea.KeyMsg); ok {
+		if key.String() == "enter" {
+			m.schThreshold = m.input.Value()
+			if m.loggedInUser != nil {
+				var i int
+				fmt.Sscanf(m.schThreshold, "%d", &i)
+				m.loggedInUser.AutoBuyThreshold = i
+				m.sessions.Set(m.loggedInID, m.loggedInUser)
+				m.message = "✓ Threshold diupdate"
+			}
+			m.screen = screenScheduleMenu
+			m.cursor = 0
+			return m, nil
+		}
+	}
+	var cmd tea.Cmd
+	m.input, cmd = m.input.Update(msg)
+	return m, cmd
 }
 
 func (m tuiModel) updateScheduleInterval(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -490,6 +516,10 @@ func (m tuiModel) viewScheduleMenu() string {
 		if m.loggedInUser.AutoBuyInterval == 0 {
 			interval = "(belum diset)"
 		}
+		thresholdStr := fmt.Sprintf("< %d MB", m.loggedInUser.AutoBuyThreshold)
+		if m.loggedInUser.AutoBuyThreshold == 0 {
+			thresholdStr = "0 MB (Habis)"
+		}
 		offer := m.loggedInUser.AutoBuyPackage
 		if offer == "" {
 			offer = "(belum diset)"
@@ -498,7 +528,7 @@ func (m tuiModel) viewScheduleMenu() string {
 		if pay == "" {
 			pay = "(belum diset)"
 		}
-		s := fmt.Sprintf("Interval : %s\nOffer ID : %s\nPayment  : %s", interval, offer, pay)
+		s := fmt.Sprintf("Interval : %s\nThreshold: %s\nOffer ID : %s\nPayment  : %s", interval, thresholdStr, offer, pay)
 		b.WriteString(boxStyle.Render(s))
 		b.WriteString("\n\n")
 	}
@@ -507,7 +537,7 @@ func (m tuiModel) viewScheduleMenu() string {
 	if m.loggedInUser != nil && m.loggedInUser.AutoBuyActive {
 		status = "Aktif"
 	}
-	items := []string{"Status: " + status, "Ubah Jadwal", "Ubah Offer ID", "Ubah Payment", "🔙 Kembali"}
+	items := []string{"Status: " + status, "Ubah Jadwal", "Ubah Threshold", "Ubah Offer ID", "Ubah Payment", "🔙 Kembali"}
 	for i, item := range items {
 		if i == m.cursor {
 			b.WriteString(selectedStyle.Render("▸ " + item))

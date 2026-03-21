@@ -290,6 +290,7 @@ func Run() {
 			mcp.WithDescription("Start an auto-buy monitor that checks quota periodically and auto-purchases a package when quota is depleted. Payment uses pulsa (AIRTIME)."),
 			mcp.WithString("offer_id", mcp.Required(), mcp.Description("The Offer ID of the package to auto-buy.")),
 			mcp.WithNumber("interval_minutes", mcp.Required(), mcp.Description("How often to check quota, in minutes (e.g. 5, 10, 30).")),
+			mcp.WithNumber("threshold_mb", mcp.Description("Threshold in MB to trigger auto buy. Default is 0 (only buy when quota is completely empty).")),
 		),
 		func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			args := request.Params.Arguments.(map[string]interface{})
@@ -307,8 +308,14 @@ func Run() {
 
 			stopAutoBuyMonitor()
 
+			threshold := 0
+			if tRaw, ok := args["threshold_mb"].(float64); ok {
+				threshold = int(tRaw)
+			}
+
 			session.AutoBuyPackage = offerID
 			session.AutoBuyInterval = interval
+			session.AutoBuyThreshold = threshold
 			session.AutoBuyPayment = "AIRTIME"
 			session.AutoBuyActive = true
 			sessions.Set(mcpUserID, session)
@@ -320,9 +327,14 @@ func Run() {
 
 			go runAutoBuyMonitor(autoCtx, sessions)
 
+			threshStr := fmt.Sprintf("< %d MB", threshold)
+			if threshold == 0 {
+				threshStr = "Habis (0 MB)"
+			}
+
 			return mcp.NewToolResultText(fmt.Sprintf(
-				"🤖 Auto-Buy Aktif!\n\n⏱ Interval: %d menit\n📦 Paket: %s\n💳 Bayar: Pulsa\n\nMonitor berjalan di background. Gunakan `auto_buy_status` untuk cek status atau `stop_auto_buy` untuk stop.",
-				interval, offerID,
+				"🤖 Auto-Buy Aktif!\n\n⏱ Interval: %d menit\n📉 Batas Kuota: %s\n📦 Paket: %s\n💳 Bayar: Pulsa\n\nMonitor berjalan di background. Gunakan `auto_buy_status` untuk cek status atau `stop_auto_buy` untuk stop.",
+				interval, threshStr, offerID,
 			)), nil
 		},
 	)
@@ -358,9 +370,14 @@ func Run() {
 				return mcp.NewToolResultText("🔴 Auto-buy tidak aktif."), nil
 			}
 
+			threshStr := fmt.Sprintf("< %d MB", session.AutoBuyThreshold)
+			if session.AutoBuyThreshold == 0 {
+				threshStr = "Habis (0 MB)"
+			}
+
 			return mcp.NewToolResultText(fmt.Sprintf(
-				"🟢 Auto-Buy Aktif\n\n⏱ Interval: %d menit\n📦 Paket: %s\n💳 Bayar: %s",
-				session.AutoBuyInterval, session.AutoBuyPackage, session.AutoBuyPayment,
+				"🟢 Auto-Buy Aktif\n\n⏱ Interval: %d menit\n📉 Batas Kuota: %s\n📦 Paket: %s\n💳 Bayar: %s",
+				session.AutoBuyInterval, threshStr, session.AutoBuyPackage, session.AutoBuyPayment,
 			)), nil
 		},
 	)
@@ -424,10 +441,26 @@ func runAutoBuyMonitor(ctx context.Context, sessions *model.SessionManager) {
 		}
 
 		needsBuy := false
-		for _, group := range quota.Groups {
-			if strings.EqualFold(group.Class, "Internet") && len(group.Items) == 0 {
+		if session.AutoBuyThreshold == 0 {
+			for _, group := range quota.Groups {
+				if strings.EqualFold(group.Class, "Internet") && len(group.Items) == 0 {
+					needsBuy = true
+					break
+				}
+			}
+		} else {
+			var totalInternetQuota float64
+			hasInternetGroup := false
+			for _, group := range quota.Groups {
+				if strings.EqualFold(group.Class, "Internet") {
+					hasInternetGroup = true
+					for _, item := range group.Items {
+						totalInternetQuota += util.ParseQuotaToMB(item.Remaining)
+					}
+				}
+			}
+			if !hasInternetGroup || totalInternetQuota <= float64(session.AutoBuyThreshold) {
 				needsBuy = true
-				break
 			}
 		}
 

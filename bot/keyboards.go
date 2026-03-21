@@ -101,6 +101,22 @@ func kbAutoMonitor() gotgbot.InlineKeyboardMarkup {
 	}
 }
 
+func kbAutoThreshold() gotgbot.InlineKeyboardMarkup {
+	return gotgbot.InlineKeyboardMarkup{
+		InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
+			{
+				{Text: "Habis (0 MB)", CallbackData: "auto_thresh_0"},
+				{Text: "📉 < 100 MB", CallbackData: "auto_thresh_100"},
+			},
+			{
+				{Text: "📉 < 200 MB", CallbackData: "auto_thresh_200"},
+				{Text: "⌨️ Custom", CallbackData: "auto_thresh_custom"},
+			},
+			{{Text: "🔙 Kembali", CallbackData: "auto_buy"}},
+		},
+	}
+}
+
 func kbAutoPackage() gotgbot.InlineKeyboardMarkup {
 	return gotgbot.InlineKeyboardMarkup{
 		InlineKeyboard: [][]gotgbot.InlineKeyboardButton{

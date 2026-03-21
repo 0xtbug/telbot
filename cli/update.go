@@ -67,6 +67,7 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		existing := m.sessions.Get(m.loggedInID)
 		if existing != nil {
 			msg.session.AutoBuyInterval = existing.AutoBuyInterval
+			msg.session.AutoBuyThreshold = existing.AutoBuyThreshold
 			msg.session.AutoBuyPackage = existing.AutoBuyPackage
 			msg.session.AutoBuyPayment = existing.AutoBuyPayment
 			msg.session.AutoBuyActive = existing.AutoBuyActive
@@ -177,6 +178,8 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateScheduleMenu(msg)
 	case screenScheduleInterval:
 		return m.updateScheduleInterval(msg)
+	case screenScheduleThreshold:
+		return m.updateScheduleThreshold(msg)
 	case screenScheduleOfferID:
 		return m.updateScheduleOfferID(msg)
 	case screenSchedulePayment:
