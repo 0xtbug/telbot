@@ -25,7 +25,7 @@ telbot --bot --verbose
 3. **Profile** — View balance, active period, tier, and points
 4. **Quota** — Check remaining internet, voice, SMS quotas
 5. **Buy Package** — Select a package and pay via Pulsa or QRIS
-6. **Auto-Buy** — Set interval → pick package → start. The bot monitors quota in the background and auto-purchases when depleted
+6. **Auto-Buy** — Set interval → pick threshold → pick package → start. The bot monitors quota in the background and auto-purchases when quota runs out or drops below the set MB threshold.
 
 ## Bot Commands
 

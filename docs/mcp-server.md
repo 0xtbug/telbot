@@ -20,7 +20,7 @@ telbot --mcp
 | `get_recommended_offers` | — | List recommended packages with prices and IDs |
 | `get_package_details` | `offer_id` | Full details for a specific package |
 | `buy_package` | `offer_id`, `payment_method` | Purchase a package (`pulsa` or `qris`) |
-| `start_auto_buy` | `offer_id`, `interval_minutes` | Start quota monitor + auto-purchase |
+| `start_auto_buy` | `offer_id`, `interval_minutes`, `threshold_mb` (opt) | Start quota monitor + auto-purchase |
 | `stop_auto_buy` | — | Stop the auto-buy monitor |
 | `auto_buy_status` | — | Check auto-buy config and status |
 
@@ -61,6 +61,7 @@ Add to your `claude_desktop_config.json`:
 - "Show me all available packages"
 - "Buy the cheapest data package using pulsa"
 - "Start auto-buy for package 00030258 every 10 minutes"
+- "Start auto-buy with a threshold of 200 MB"
 
 ## Logs
 

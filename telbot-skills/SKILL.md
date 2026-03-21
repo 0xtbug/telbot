@@ -56,7 +56,7 @@ Once connected, OpenClaw has access to the following Telkomsel tools via the MCP
 - **buy_package** — Purchase a package using its `offer_id` and specifying a `payment_method` (`pulsa` or `qris`).
 
 ### Automation
-- **start_auto_buy** — Start a background monitor that checks quota periodically and auto-purchases a package (via Pulsa) when depleted.
+- **start_auto_buy** — Start a background monitor that checks quota periodically and auto-purchases a package (via Pulsa) when depleted or below a specific MB threshold limit.
 - **auto_buy_status** — Check if the monitor is running and what package it is configured to buy.
 - **stop_auto_buy** — Stop the auto-buy monitor.
 
@@ -77,7 +77,7 @@ When the user asks to interact with Telkomsel:
    - When calling `buy_package`, ensure the `payment_method` is exactly `"pulsa"` or `"qris"`.
 
 4. **Auto-Buy Execution:**
-   When setting up auto-buy with `start_auto_buy`, ask the user for their preferred checking interval (in minutes) and which package (by `offer_id`) they want to monitor. Remind them that auto-buy relies on their Pulsa balance.
+   When setting up auto-buy with `start_auto_buy`, ask the user for their preferred checking interval (in minutes), which package (by `offer_id`) they want to monitor, and their preferred MB threshold limit. Remind them that auto-buy relies on their Pulsa balance.
 
 ## Knowledge from Research
 - **Config Locations:** OpenClaw defaults to `~/.openclaw/openclaw.json`.

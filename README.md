@@ -8,7 +8,7 @@ Go-based tool for managing Telkomsel accounts via **Telegram Bot**, **Terminal C
 - 📊 Profile, balance, quota checking
 - 📦 Browse recommended packages
 - 🛍️ Purchase packages (Pulsa / QRIS)
-- ⏰ Auto-buy monitor (auto-purchase when quota depleted)
+- ⏰ Auto-buy monitor (auto-purchase when quota is depleted or below a custom MB threshold)
 - 🤖 MCP server for AI agent integration
 
 ## Quick Start

@@ -25,7 +25,7 @@ No environment variables required — sessions are loaded from `sessions.json`.
 2. **Profile** — View balance, active period, tier, points
 3. **Quota** — Check all remaining quotas
 4. **Buy Package** — Choose Ilmupedia or enter a custom Offer ID, select payment method
-5. **Auto-Buy** — Configure interval and package, runs in background while CLI is open
+5. **Auto-Buy** — Configure interval, threshold, and package, runs in background while CLI is open
 
 ## Session Persistence
 
