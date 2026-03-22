@@ -18,13 +18,14 @@ const (
 	StateAwaitingAutoInt       SessionState = "awaiting_auto_interval"
 	StateAwaitingAutoThreshold SessionState = "awaiting_auto_threshold"
 	StateAwaitingAutoOffer     SessionState = "awaiting_auto_offer_id"
+	StateAwaitingOTP           SessionState = "awaiting_otp"
 	StateLoggedIn              SessionState = "logged_in"
 	StateLoggingIn             SessionState = "logging_in"
 )
 
 func (s SessionState) IsAwaiting() bool {
 	switch s {
-	case StateAwaitingPhone, StateAwaitingOfferID, StateAwaitingAutoInt, StateAwaitingAutoThreshold, StateAwaitingAutoOffer:
+	case StateAwaitingPhone, StateAwaitingOfferID, StateAwaitingAutoInt, StateAwaitingAutoThreshold, StateAwaitingAutoOffer, StateAwaitingOTP:
 		return true
 	}
 	return false
@@ -41,8 +42,10 @@ type Session struct {
 	State         SessionState `json:"state"`
 	LastLoginAt   time.Time    `json:"last_login_at"`
 
-	PendingOfferID string `json:"pending_offer_id,omitempty"`
-	PendingPayment string `json:"pending_payment,omitempty"`
+	PendingAuthId      string `json:"pending_auth_id,omitempty"`
+	PendingAmlbCookie  string `json:"pending_amlbcookie,omitempty"`
+	PendingOfferID     string `json:"pending_offer_id,omitempty"`
+	PendingPayment     string `json:"pending_payment,omitempty"`
 
 	AutoBuyInterval  int    `json:"auto_buy_interval"`
 	AutoBuyThreshold int    `json:"auto_buy_threshold"`

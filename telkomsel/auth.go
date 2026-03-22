@@ -29,16 +29,33 @@ func NewAuth() *Auth {
 }
 
 func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCallback) (*model.Session, error) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
 	fullPhone := "62" + localPhone
-
 	session := &model.Session{
 		Phone:     localPhone,
 		FullPhone: fullPhone,
 		State:     model.StateLoggingIn,
 	}
+
+	if err := a.RequestOTP(ctx, session); err != nil {
+		return nil, err
+	}
+
+	log.Println("[Login] Waiting for OTP from user...")
+	otp, err := otpCallback()
+	if err != nil {
+		return nil, fmt.Errorf("OTP callback: %w", err)
+	}
+
+	if err := a.SubmitOTP(ctx, session, otp); err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
+func (a *Auth) RequestOTP(ctx context.Context, session *model.Session) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 
 	c := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -61,7 +78,7 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		"Sec-Fetch-Site":   []string{"same-site"},
 		"Sec-Fetch-Mode":   []string{"cors"},
 		"Sec-Fetch-Dest":   []string{"empty"},
-		"Am-Phonenumber":   []string{"+" + fullPhone},
+		"Am-Phonenumber":   []string{"+" + session.FullPhone},
 		"Am-Clientid":      []string{clientID},
 		"Am-Send":          []string{"otp"},
 		"Content-Type":     []string{"application/json"},
@@ -77,13 +94,13 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 	req1.Header = headers1
 	resp1, err := c.Do(req1)
 	if err != nil {
-		return nil, fmt.Errorf("request OTP post: %w", err)
+		return fmt.Errorf("request OTP post: %w", err)
 	}
 	defer resp1.Body.Close()
 
 	if resp1.StatusCode != 200 {
 		b, _ := io.ReadAll(resp1.Body)
-		return nil, fmt.Errorf("request OTP status %d: %s", resp1.StatusCode, string(b))
+		return fmt.Errorf("request OTP status %d: %s", resp1.StatusCode, string(b))
 	}
 
 	var authResp1 struct {
@@ -91,7 +108,7 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		Callbacks []any  `json:"callbacks"`
 	}
 	if err := json.NewDecoder(resp1.Body).Decode(&authResp1); err != nil {
-		return nil, fmt.Errorf("decode OTP response: %w", err)
+		return fmt.Errorf("decode OTP response: %w", err)
 	}
 
 	amlbcookie := ""
@@ -101,15 +118,27 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		}
 	}
 
-	log.Println("[Login] Waiting for OTP from user...")
-	otp, err := otpCallback()
-	if err != nil {
-		return nil, fmt.Errorf("OTP callback: %w", err)
+	session.PendingAuthId = authResp1.AuthId
+	session.PendingAmlbCookie = amlbcookie
+	session.State = model.StateAwaitingOTP
+	return nil
+}
+
+func (a *Auth) SubmitOTP(ctx context.Context, session *model.Session, otp string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	c := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
+	userAgent := []string{config.AuthUserAgent}
+	authURL := fmt.Sprintf("%s/iam/v1/realms/%s/authenticate?authIndexType=service&authIndexValue=phoneLogin", config.CiamBaseURL, config.CiamRealm)
 
 	log.Println("[Login] Submitting OTP...")
 	reqBody2Map := map[string]interface{}{
-		"authId": authResp1.AuthId,
+		"authId": session.PendingAuthId,
 		"callbacks": []map[string]interface{}{
 			{
 				"type": "PasswordCallback",
@@ -148,28 +177,28 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		"Accept-Language":  []string{"id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7"},
 		"Priority":         []string{"u=1, i"},
 	}
-	if amlbcookie != "" {
-		headers2.Set("Cookie", amlbcookie)
+	if session.PendingAmlbCookie != "" {
+		headers2.Set("Cookie", session.PendingAmlbCookie)
 	}
 
 	req2, _ := http.NewRequestWithContext(ctx, "POST", authURL, bytes.NewReader(reqBody2Bytes))
 	req2.Header = headers2
 	resp2, err := c.Do(req2)
 	if err != nil {
-		return nil, fmt.Errorf("submit OTP post: %w", err)
+		return fmt.Errorf("submit OTP post: %w", err)
 	}
 	defer resp2.Body.Close()
 
 	if resp2.StatusCode != 200 {
 		b, _ := io.ReadAll(resp2.Body)
-		return nil, fmt.Errorf("submit OTP status %d: %s", resp2.StatusCode, string(b))
+		return fmt.Errorf("submit OTP status %d: %s", resp2.StatusCode, string(b))
 	}
 
 	var authResp2 struct {
 		TokenId string `json:"tokenId"`
 	}
 	if err := json.NewDecoder(resp2.Body).Decode(&authResp2); err != nil {
-		return nil, fmt.Errorf("decode submit OTP response: %w", err)
+		return fmt.Errorf("decode submit OTP response: %w", err)
 	}
 
 	iPlanetCookie := ""
@@ -206,8 +235,8 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		"Sec-Fetch-Dest":   []string{"empty"},
 	}
 	cookies3 := []string{}
-	if amlbcookie != "" {
-		cookies3 = append(cookies3, amlbcookie)
+	if session.PendingAmlbCookie != "" {
+		cookies3 = append(cookies3, session.PendingAmlbCookie)
 	}
 	if iPlanetCookie != "" {
 		cookies3 = append(cookies3, iPlanetCookie)
@@ -220,7 +249,7 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 	req3.Header = headers3
 	resp3, err := c.Do(req3)
 	if err != nil {
-		return nil, fmt.Errorf("authorize get: %w", err)
+		return fmt.Errorf("authorize get: %w", err)
 	}
 	defer resp3.Body.Close()
 
@@ -233,7 +262,7 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		}
 	}
 	if code == "" {
-		return nil, fmt.Errorf("could not extract code from authorize redirect. Location: %s", location)
+		return fmt.Errorf("could not extract code from authorize redirect. Location: %s", location)
 	}
 
 	log.Println("[Login] Requesting access token...")
@@ -269,13 +298,13 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 	req4.Header = headers4
 	resp4, err := c.Do(req4)
 	if err != nil {
-		return nil, fmt.Errorf("access token post: %w", err)
+		return fmt.Errorf("access token post: %w", err)
 	}
 	defer resp4.Body.Close()
 
 	if resp4.StatusCode != 200 {
 		b, _ := io.ReadAll(resp4.Body)
-		return nil, fmt.Errorf("access token status %d: %s", resp4.StatusCode, string(b))
+		return fmt.Errorf("access token status %d: %s", resp4.StatusCode, string(b))
 	}
 
 	var tokenResp struct {
@@ -283,11 +312,11 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 		IdToken     string `json:"id_token"`
 	}
 	if err := json.NewDecoder(resp4.Body).Decode(&tokenResp); err != nil {
-		return nil, fmt.Errorf("decode access token response: %w", err)
+		return fmt.Errorf("decode access token response: %w", err)
 	}
 
 	if tokenResp.AccessToken == "" {
-		return nil, fmt.Errorf("access token is empty")
+		return fmt.Errorf("access token is empty")
 	}
 
 	accessAuthEnc, authEnc := GenerateAuthHeaders(tokenResp.AccessToken, tokenResp.IdToken)
@@ -298,8 +327,10 @@ func (a *Auth) Login(ctx context.Context, localPhone string, otpCallback OTPCall
 	session.Hash = util.RandomHex(28)
 	session.WebAppVersion = config.WebAppVersion
 
+	session.PendingAuthId = ""
+	session.PendingAmlbCookie = ""
 	session.State = model.StateLoggedIn
 	session.LastLoginAt = time.Now()
 	log.Println("[Login] ✓ Login successful, tokens captured!")
-	return session, nil
+	return nil
 }

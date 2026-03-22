@@ -20,8 +20,6 @@ import (
 )
 
 var (
-	otpChan      chan string
-	otpMu        sync.Mutex
 	autoCancelMu sync.Mutex
 	autoCancel   context.CancelFunc
 )
@@ -63,45 +61,21 @@ func Run() {
 				return mcp.NewToolResultError(fmt.Sprintf("Invalid phone number: %v", err)), nil
 			}
 
-			otpMu.Lock()
-			otpChan = make(chan string, 1)
-			otpMu.Unlock()
-
-			errChan := make(chan error, 1)
-
-			go func() {
-				auth := telkomsel.NewAuth()
-				loginCtx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
-				defer cancel()
-
-				session, loginErr := auth.Login(loginCtx, local, func() (string, error) {
-					otpMu.Lock()
-					ch := otpChan
-					otpMu.Unlock()
-
-					select {
-					case otp := <-ch:
-						return otp, nil
-					case <-loginCtx.Done():
-						return "", fmt.Errorf("OTP timeout")
-					}
-				})
-
-				if loginErr != nil {
-					errChan <- loginErr
-					return
-				}
-
-				sessions.Set(mcpUserID, session)
-				log.Printf("[MCP] Login success for +%s", full)
-			}()
-
-			select {
-			case err := <-errChan:
-				return mcp.NewToolResultError(fmt.Sprintf("Login failed: %v", err)), nil
-			case <-time.After(15 * time.Second):
-				return mcp.NewToolResultText(fmt.Sprintf("📲 OTP dikirim ke +%s. Gunakan tool `submit_otp` dengan kode OTP untuk menyelesaikan login.", full)), nil
+			session := sessions.Get(mcpUserID)
+			if session == nil {
+				session = &model.Session{}
 			}
+			session.Phone = local
+			session.FullPhone = "62" + local
+			session.State = model.StateLoggingIn
+
+			auth := telkomsel.NewAuth()
+			if err := auth.RequestOTP(ctx, session); err != nil {
+				return mcp.NewToolResultError(fmt.Sprintf("Login failed: %v", err)), nil
+			}
+
+			sessions.Set(mcpUserID, session)
+			return mcp.NewToolResultText(fmt.Sprintf("📲 OTP dikirim ke +%s. Gunakan tool `submit_otp` dengan kode OTP untuk menyelesaikan login.", full)), nil
 		},
 	)
 
@@ -116,20 +90,18 @@ func Run() {
 				return mcp.NewToolResultError("otp argument is required"), nil
 			}
 
-			otpMu.Lock()
-			ch := otpChan
-			otpMu.Unlock()
-
-			if ch == nil {
-				return mcp.NewToolResultError("No login in progress. Call 'login' first."), nil
+			session := sessions.Get(mcpUserID)
+			if session == nil || session.State != model.StateAwaitingOTP {
+				return mcp.NewToolResultError("No login in progress or session expired. Call 'login' first."), nil
 			}
 
-			select {
-			case ch <- otp:
-				return mcp.NewToolResultText("✓ OTP dikirim, memproses login... Cek profil dengan `get_profile` untuk verifikasi."), nil
-			default:
-				return mcp.NewToolResultError("OTP channel full or login already completed."), nil
+			auth := telkomsel.NewAuth()
+			if err := auth.SubmitOTP(ctx, session, otp); err != nil {
+				return mcp.NewToolResultError(fmt.Sprintf("Submit OTP failed: %v", err)), nil
 			}
+
+			sessions.Set(mcpUserID, session)
+			return mcp.NewToolResultText("✅ Login berhasil! Token disimpan dengan aman. Cek profil dengan `get_profile` untuk verifikasi."), nil
 		},
 	)
 
