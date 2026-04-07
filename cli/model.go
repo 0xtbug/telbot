@@ -55,6 +55,7 @@ type buyMsg struct {
 	err    error
 }
 type otpRequestMsg struct{}
+type autoOtpMsg struct{}
 type paymentPollMsg struct {
 	status *telkomsel.PaymentStatus
 	err    error

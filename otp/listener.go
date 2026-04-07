@@ -73,7 +73,7 @@ func (l *Listener) Stop() error {
 	return l.server.Shutdown(ctx)
 }
 
-func (l *Listener) WaitForOTP(phone string, timeout time.Duration) (string, error) {
+func (l *Listener) WaitForOTP(ctx context.Context, phone string) (string, error) {
 	normalized := normalizePhone(phone)
 	ch := make(chan string, 1)
 
@@ -83,18 +83,21 @@ func (l *Listener) WaitForOTP(phone string, timeout time.Duration) (string, erro
 
 	defer func() {
 		l.mu.Lock()
-		delete(l.waiters, normalized)
+		// Only delete if it hasn't been overwritten by a newer request
+		if l.waiters[normalized] == ch {
+			delete(l.waiters, normalized)
+		}
 		l.mu.Unlock()
 	}()
 
-	log.Printf("[OTP] Waiting for OTP for phone %s (timeout: %v)", normalized, timeout)
+	log.Printf("[OTP] Waiting for OTP for phone %s", normalized)
 
 	select {
 	case otp := <-ch:
 		log.Printf("[OTP] Received OTP for phone %s: %s", normalized, otp)
 		return otp, nil
-	case <-time.After(timeout):
-		return "", fmt.Errorf("OTP timeout after %v — no SMS received from webhook", timeout)
+	case <-ctx.Done():
+		return "", ctx.Err()
 	}
 }
 

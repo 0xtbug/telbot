@@ -47,7 +47,11 @@ func AutoRelogin(ctx context.Context, auth *telkomsel.Auth, listener *Listener, 
 	}
 
 	log.Printf("[AutoRelogin] Waiting for OTP from webhook (timeout: %v)...", OTPWaitTimeout)
-	otp, err := listener.WaitForOTP(phone, OTPWaitTimeout)
+	
+	waitCtx, cancel := context.WithTimeout(ctx, OTPWaitTimeout)
+	defer cancel()
+	
+	otp, err := listener.WaitForOTP(waitCtx, phone)
 	if err != nil {
 		return nil, fmt.Errorf("auto re-login wait OTP: %w", err)
 	}

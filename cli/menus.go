@@ -105,6 +105,12 @@ func (m tuiModel) updateLogin(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m tuiModel) updateOTP(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if _, ok := msg.(autoOtpMsg); ok {
+		m.screen = screenLoading
+		m.loading = "🤖 Auto OTP diterima, memverifikasi..."
+		return m, nil
+	}
+
 	if key, ok := msg.(tea.KeyMsg); ok {
 		if key.String() == "enter" {
 			otp := m.input.Value()

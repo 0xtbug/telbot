@@ -39,6 +39,29 @@ func (h *Handler) handlePhoneInput(b *gotgbot.Bot, ctx *ext.Context, userID int6
 	otpCallback := func() (string, error) {
 		_, _ = ctx.EffectiveMessage.Reply(b, "📲 OTP dikirim ke HP kamu.\n\n🔢 *Kirim kode OTP:*", &gotgbot.SendMessageOpts{ParseMode: "Markdown"})
 
+		if h.otpListener != nil {
+			waitCtx, cancel := context.WithTimeout(apiCtx, 3*time.Minute)
+			defer cancel() // LANGSUNG mati kalau manual input yang jalan/menang
+
+			webhookChan := make(chan string, 1)
+			go func() {
+				otp, err := h.otpListener.WaitForOTP(waitCtx, local)
+				if err == nil && otp != "" {
+					webhookChan <- otp
+				}
+			}()
+
+			select {
+			case otp := <-otpChan:
+				return otp, nil
+			case otp := <-webhookChan:
+				_, _ = ctx.EffectiveMessage.Reply(b, "🤖 *Auto OTP diterima dari SMS Forwarder!* Memverifikasi...", &gotgbot.SendMessageOpts{ParseMode: "Markdown"})
+				return otp, nil
+			case <-time.After(2 * time.Minute):
+				return "", fmt.Errorf("OTP timeout (2 menit)")
+			}
+		}
+
 		select {
 		case otp := <-otpChan:
 			return otp, nil

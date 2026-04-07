@@ -77,20 +77,37 @@ func (m *tuiModel) doLogin(localPhone string) tea.Cmd {
 	return func() tea.Msg {
 		ctx := context.Background()
 		otpCallback := func() (string, error) {
-			if m.otpListener != nil {
-				if programRef != nil {
-					programRef.Send(otpRequestMsg{})
-				}
-				otp, err := m.otpListener.WaitForOTP(localPhone, 3*time.Minute)
-				if err != nil {
-					return "", fmt.Errorf("auto OTP: %w", err)
-				}
-				return otp, nil
-			}
-
 			if programRef != nil {
 				programRef.Send(otpRequestMsg{})
 			}
+
+			if m.otpListener != nil {
+				waitCtx, cancel := context.WithTimeout(ctx, 3*time.Minute)
+				defer cancel() // LANGSUNG mati kalau manual input yang jalan/menang
+
+				webhookChan := make(chan string, 1)
+				go func() {
+					otp, err := m.otpListener.WaitForOTP(waitCtx, localPhone)
+					if err == nil && otp != "" {
+						webhookChan <- otp
+					}
+				}()
+
+				select {
+				case otp := <-otpChan:
+					if otp == "" {
+						return "", fmt.Errorf("OTP kosong")
+					}
+					return otp, nil
+				case otp := <-webhookChan:
+					if programRef != nil {
+						programRef.Send(autoOtpMsg{})
+					}
+					return otp, nil
+				}
+			}
+
+			// Manual OTP: wait from user input
 			otp := <-otpChan
 			if otp == "" {
 				return "", fmt.Errorf("OTP kosong")
