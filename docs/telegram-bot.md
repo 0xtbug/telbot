@@ -41,6 +41,6 @@ All other interactions are through inline keyboard buttons.
 
 ## Auto Re-login
 
-If an OTP webhook listener is configured (`OTP_WEBHOOK_PORT`), the bot will automatically re-login when a session expires during auto-buy monitoring. This requires the [SMS Forwarder](../sms-forwarder-openwrt/README.md) to be set up on an OpenWrt device.
+If an OTP webhook listener is configured (`OTP_WEBHOOK_PORT`), the bot will automatically re-login when a session expires during auto-buy monitoring. This requires the [SMS Forwarder](https://github.com/0xtbug/sms-forwarder-openwrt) to be set up on an OpenWrt device.
 
 See [Auto Re-login docs](auto-relogin.md) for full setup guide.

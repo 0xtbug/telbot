@@ -1,6 +1,6 @@
 # Auto Re-login (OTP Webhook)
 
-When a Telkomsel session expires during automation (e.g., auto-buy), Telbot can automatically re-login by receiving the OTP via a webhook from the [SMS Forwarder](../sms-forwarder-openwrt/README.md) running on an OpenWrt device.
+When a Telkomsel session expires during automation (e.g., auto-buy), Telbot can automatically re-login by receiving the OTP via a webhook from the [SMS Forwarder](https://github.com/0xtbug/sms-forwarder-openwrt) running on an OpenWrt device.
 
 ## Architecture
 
@@ -60,7 +60,7 @@ sudo ufw allow 8081/tcp
 
 ### Step 2: Configure SMS Forwarder (OpenWrt)
 
-See the [SMS Forwarder README](../sms-forwarder-openwrt/README.md) for full installation. Add the webhook config:
+See the [SMS Forwarder documentation](https://github.com/0xtbug/sms-forwarder-openwrt) for full installation. Add the webhook config:
 
 ```bash
 # In /etc/sms-forwarder/sms-forwarder.conf:
@@ -83,7 +83,7 @@ Simulate an OTP webhook:
 curl -X POST http://YOUR_VPS_IP:8081/api/otp \
   -H "Content-Type: application/json" \
   -H "X-Webhook-Secret: your-random-secret-here" \
-  -d '{"from":"+6281219414870","body":"Kode OTP MyTelkomsel Anda: 654321. Jangan berikan ke siapapun."}'
+  -d '{"from":"+6281xxxxxx","body":"Kode OTP MyTelkomsel Anda: 654321. Jangan berikan ke siapapun."}'
 ```
 
 ## Webhook API

@@ -33,7 +33,7 @@ Sessions are saved to `sessions.json` automatically. If you've logged in before 
 
 ## Auto OTP (Optional)
 
-If `OTP_WEBHOOK_PORT` is set as an environment variable, the CLI will start an OTP webhook listener. During login, instead of manually entering the OTP, it will be automatically received from the [SMS Forwarder](../sms-forwarder-openwrt/README.md) webhook.
+If `OTP_WEBHOOK_PORT` is set as an environment variable, the CLI will start an OTP webhook listener. During login, instead of manually entering the OTP, it will be automatically received from the [SMS Forwarder](https://github.com/0xtbug/sms-forwarder-openwrt) webhook.
 
 ```bash
 # Export before running CLI:

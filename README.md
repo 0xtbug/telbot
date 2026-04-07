@@ -96,7 +96,7 @@ See the [docs/](docs/) folder for detailed guides:
 - [Auto Re-login (OTP Webhook)](docs/auto-relogin.md)
 - [Systemd Service (Linux)](docs/systemd.md)
 - [OpenWrt](docs/openwrt.md)
-- [SMS Forwarder](sms-forwarder-openwrt/README.md)
+- [SMS Forwarder (External Repo)](https://github.com/0xtbug/sms-forwarder-openwrt)
 - [OpenClaw Skill](telbot-skills/SKILL.md)
 
 ## Disclaimer
