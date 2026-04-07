@@ -15,6 +15,7 @@ import (
 	"telkomsel-bot/config"
 	"telkomsel-bot/mcp"
 	"telkomsel-bot/model"
+	"telkomsel-bot/otp"
 	"telkomsel-bot/util"
 )
 
@@ -110,7 +111,17 @@ func runBot() {
 
 	sessions := model.NewSessionManager(config.GetSessionPath())
 
-	handler := bot.NewHandler(b, sessions, cfg.AdminID)
+	var otpListener *otp.Listener
+	if cfg.OTPWebhookPort > 0 {
+		otpListener = otp.NewListener(cfg.OTPWebhookPort, cfg.OTPWebhookSecret)
+		if err := otpListener.Start(); err != nil {
+			log.Printf("Failed to start OTP webhook listener: %v", err)
+		} else {
+			log.Printf("OTP webhook listener started on :%d", cfg.OTPWebhookPort)
+		}
+	}
+
+	handler := bot.NewHandler(b, sessions, cfg.AdminID, otpListener)
 	handler.Register(dispatcher)
 
 	handler.ValidateSessions()

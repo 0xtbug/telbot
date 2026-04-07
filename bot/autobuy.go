@@ -10,6 +10,7 @@ import (
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
 
+	"telkomsel-bot/otp"
 	"telkomsel-bot/telkomsel"
 	"telkomsel-bot/util"
 )
@@ -178,6 +179,33 @@ func (h *Handler) runAutoBuyMonitor(ctx context.Context, b *gotgbot.Bot, chatID,
 		quota, err := h.api.CheckQuota(apiCtx, session)
 		if err != nil {
 			if errors.Is(err, telkomsel.ErrUnauthorized) {
+				if h.otpListener != nil {
+					// Auto re-login
+					_, _ = b.SendMessage(chatID, "⚠️ Sesi expired! Auto re-login...", &gotgbot.SendMessageOpts{ParseMode: "Markdown"})
+					log.Printf("[AutoBuy] Session expired for user %d, attempting auto re-login", userID)
+
+					newSession, reloginErr := otp.AutoRelogin(apiCtx, h.auth, h.otpListener, session)
+					if reloginErr != nil {
+						log.Printf("[AutoBuy] Auto re-login failed for user %d: %v", userID, reloginErr)
+						_, _ = b.SendMessage(chatID, fmt.Sprintf("❌ Auto re-login gagal: %s\n\nAuto-buy dihentikan. Login ulang manual.", reloginErr.Error()), &gotgbot.SendMessageOpts{
+							ParseMode:   "Markdown",
+							ReplyMarkup: kbLogin(),
+						})
+						h.stopAutoBuy(userID)
+						return
+					}
+
+					// Preserve auto-buy config
+					otp.CopyAutoBuyConfig(session, newSession)
+					h.sessions.Set(userID, newSession)
+					session = newSession
+
+					_, _ = b.SendMessage(chatID, "✅ Auto re-login berhasil! Melanjutkan monitor...", &gotgbot.SendMessageOpts{ParseMode: "Markdown"})
+					log.Printf("[AutoBuy] Auto re-login successful for user %d, resuming monitor", userID)
+					continue
+				}
+
+				// No OTP listener — fall back to manual
 				_, _ = b.SendMessage(chatID, "⚠️ Sesi expired! Auto-buy dihentikan. Login ulang.", &gotgbot.SendMessageOpts{
 					ParseMode:   "Markdown",
 					ReplyMarkup: kbLogin(),

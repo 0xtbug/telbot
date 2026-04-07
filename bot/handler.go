@@ -13,16 +13,18 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers/filters/message"
 
 	"telkomsel-bot/model"
+	"telkomsel-bot/otp"
 	"telkomsel-bot/telkomsel"
 	"telkomsel-bot/util"
 )
 
 type Handler struct {
-	bot      *gotgbot.Bot
-	sessions *model.SessionManager
-	auth     *telkomsel.Auth
-	api      *telkomsel.Client
-	adminID  int64
+	bot         *gotgbot.Bot
+	sessions    *model.SessionManager
+	auth        *telkomsel.Auth
+	api         *telkomsel.Client
+	adminID     int64
+	otpListener *otp.Listener
 
 	otpChans   map[int64]chan string
 	otpChansMu sync.Mutex
@@ -31,15 +33,16 @@ type Handler struct {
 	autoStopsMu sync.Mutex
 }
 
-func NewHandler(bot *gotgbot.Bot, sessions *model.SessionManager, adminID int64) *Handler {
+func NewHandler(bot *gotgbot.Bot, sessions *model.SessionManager, adminID int64, otpListener *otp.Listener) *Handler {
 	return &Handler{
-		bot:       bot,
-		sessions:  sessions,
-		auth:      telkomsel.NewAuth(),
-		api:       telkomsel.NewClient(),
-		adminID:   adminID,
-		otpChans:  make(map[int64]chan string),
-		autoStops: make(map[int64]context.CancelFunc),
+		bot:         bot,
+		sessions:    sessions,
+		auth:        telkomsel.NewAuth(),
+		api:         telkomsel.NewClient(),
+		adminID:     adminID,
+		otpListener: otpListener,
+		otpChans:    make(map[int64]chan string),
+		autoStops:   make(map[int64]context.CancelFunc),
 	}
 }
 

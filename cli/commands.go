@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -76,6 +77,17 @@ func (m *tuiModel) doLogin(localPhone string) tea.Cmd {
 	return func() tea.Msg {
 		ctx := context.Background()
 		otpCallback := func() (string, error) {
+			if m.otpListener != nil {
+				if programRef != nil {
+					programRef.Send(otpRequestMsg{})
+				}
+				otp, err := m.otpListener.WaitForOTP(localPhone, 3*time.Minute)
+				if err != nil {
+					return "", fmt.Errorf("auto OTP: %w", err)
+				}
+				return otp, nil
+			}
+
 			if programRef != nil {
 				programRef.Send(otpRequestMsg{})
 			}

@@ -47,8 +47,10 @@ const (
 var Verbose bool
 
 type Config struct {
-	BotToken string
-	AdminID  int64
+	BotToken         string
+	AdminID          int64
+	OTPWebhookPort   int
+	OTPWebhookSecret string
 }
 
 func Load() *Config {
@@ -77,8 +79,18 @@ func Load() *Config {
 		log.Fatal("❌ TELEGRAM_ADMIN_ID env var is required")
 	}
 
+	otpPort := 0
+	if portStr := os.Getenv("OTP_WEBHOOK_PORT"); portStr != "" {
+		if p, err := strconv.Atoi(portStr); err == nil && p > 0 {
+			otpPort = p
+		}
+	}
+	otpSecret := os.Getenv("OTP_WEBHOOK_SECRET")
+
 	return &Config{
-		BotToken: token,
-		AdminID:  adminID,
+		BotToken:         token,
+		AdminID:          adminID,
+		OTPWebhookPort:   otpPort,
+		OTPWebhookSecret: otpSecret,
 	}
 }

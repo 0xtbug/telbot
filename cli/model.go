@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"telkomsel-bot/model"
+	"telkomsel-bot/otp"
 	"telkomsel-bot/telkomsel"
 )
 
@@ -77,9 +78,10 @@ type tuiModel struct {
 	loading  string
 	prevMenu screen
 
-	api      *telkomsel.Client
-	auth     *telkomsel.Auth
-	sessions *model.SessionManager
+	api         *telkomsel.Client
+	auth        *telkomsel.Auth
+	sessions    *model.SessionManager
+	otpListener *otp.Listener
 
 	loggedInUser *model.Session
 	loggedInID   int64
@@ -96,10 +98,10 @@ type tuiModel struct {
 	pollStatus  string
 	qrString    string
 
-	schInterval string
+	schInterval  string
 	schThreshold string
-	schOfferID  string
-	schPayment  string
+	schOfferID   string
+	schPayment   string
 }
 
 func newModel(api *telkomsel.Client, auth *telkomsel.Auth, sessions *model.SessionManager) tuiModel {
