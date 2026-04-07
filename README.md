@@ -9,6 +9,7 @@ Go-based tool for managing Telkomsel accounts via **Telegram Bot**, **Terminal C
 - 📦 Browse recommended packages
 - 🛍️ Purchase packages (Pulsa / QRIS)
 - ⏰ Auto-buy monitor (auto-purchase when quota is depleted or below a custom MB threshold)
+- 🔄 Auto re-login via OTP webhook (session renewal without manual intervention)
 - 🤖 MCP server for AI agent integration
 
 ## Quick Start
@@ -67,6 +68,8 @@ To install the binary globally so you can run `telbot` from any folder:
 |----------|----------|-------------|
 | `TELKOMSEL_BOT_TOKEN` | Bot mode | Telegram bot token from BotFather |
 | `TELEGRAM_ADMIN_ID` | Bot mode | Your Telegram user ID |
+| `OTP_WEBHOOK_PORT` | Optional | Port for OTP webhook listener (e.g. `8081`) |
+| `OTP_WEBHOOK_SECRET` | Optional | Shared secret for webhook authentication |
 
 You can either export these directly in your terminal, or place them in a `.env` file located in your platform's standard configuration directory:
 
@@ -90,8 +93,10 @@ See the [docs/](docs/) folder for detailed guides:
 - [Telegram Bot](docs/telegram-bot.md)
 - [CLI Mode](docs/cli.md)
 - [MCP Server](docs/mcp-server.md)
+- [Auto Re-login (OTP Webhook)](docs/auto-relogin.md)
 - [Systemd Service (Linux)](docs/systemd.md)
 - [OpenWrt](docs/openwrt.md)
+- [SMS Forwarder](sms-forwarder-openwrt/README.md)
 - [OpenClaw Skill](telbot-skills/SKILL.md)
 
 ## Disclaimer

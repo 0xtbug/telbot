@@ -47,6 +47,10 @@ WorkingDirectory=/home/your_username/telkomsel-bot
 Environment="TELKOMSEL_BOT_TOKEN=your_telegram_bot_token"
 Environment="TELEGRAM_ADMIN_ID=your_telegram_id"
 
+# Optional: Enable auto re-login via OTP webhook from SMS Forwarder
+# Environment="OTP_WEBHOOK_PORT=8081"
+# Environment="OTP_WEBHOOK_SECRET=your_secret"
+
 # The command to execute
 ExecStart=/usr/local/bin/telbot --bot
 

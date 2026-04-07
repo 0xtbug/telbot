@@ -32,6 +32,10 @@ Here is the content of .env
 ```bash
 TELKOMSEL_BOT_TOKEN=your_bot_token
 TELEGRAM_ADMIN_ID=your_admin_id
+
+# Optional: Enable auto re-login via OTP webhook from SMS Forwarder
+# OTP_WEBHOOK_PORT=8081
+# OTP_WEBHOOK_SECRET=your_secret
 ```
 
 Then copy .env to /.config/telbot/ directory
