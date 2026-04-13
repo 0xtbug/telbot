@@ -218,26 +218,65 @@ func (h *Handler) runAutoBuyMonitor(ctx context.Context, b *gotgbot.Bot, chatID,
 		}
 
 		needsBuy := false
-		if session.AutoBuyThreshold == 0 {
+		var matchedOrderID string
+
+		if session.AutoBuyOrderID != "" {
+			var trackedItem *telkomsel.QuotaItem
 			for _, group := range quota.Groups {
-				if strings.EqualFold(group.Class, "Internet") && len(group.Items) == 0 {
-					needsBuy = true
+				for _, item := range group.Items {
+					if item.OrderID == session.AutoBuyOrderID {
+						it := item
+						trackedItem = &it
+						matchedOrderID = item.OrderID
+						break
+					}
+				}
+				if trackedItem != nil {
 					break
 				}
 			}
+
+			if trackedItem == nil {
+				log.Printf("[AutoBuy] Tracked OrderID %s not found for user %d. Assuming depleted.", session.AutoBuyOrderID, userID)
+				needsBuy = true
+			} else {
+				log.Printf("[AutoBuy] Tracked OrderID %s found for user %d: %s remaining", session.AutoBuyOrderID, userID, trackedItem.Remaining)
+				if util.ParseQuotaToMB(trackedItem.Remaining) <= float64(session.AutoBuyThreshold) {
+					needsBuy = true
+				}
+			}
 		} else {
-			var totalInternetQuota float64
-			hasInternetGroup := false
+			var totalTargetQuota float64
+			hasTargetGroup := false
+			
+			targetClass := "Internet"
+			if session.AutoBuyPackage == "ilmupedia" || offerID == "" {
+				targetClass = "ENTERTAINMENT"
+			}
+
 			for _, group := range quota.Groups {
-				if strings.EqualFold(group.Class, "Internet") {
-					hasInternetGroup = true
+				if strings.EqualFold(group.Class, targetClass) {
 					for _, item := range group.Items {
-						totalInternetQuota += util.ParseQuotaToMB(item.Remaining)
+						if targetClass == "ENTERTAINMENT" && !strings.Contains(strings.ToLower(item.Name), "belajar") {
+							continue
+						}
+						hasTargetGroup = true
+						totalTargetQuota += util.ParseQuotaToMB(item.Remaining)
+						if item.OrderID != "" {
+							matchedOrderID = item.OrderID
+						}
 					}
 				}
 			}
-			if !hasInternetGroup || totalInternetQuota <= float64(session.AutoBuyThreshold) {
+
+			if !hasTargetGroup || totalTargetQuota <= float64(session.AutoBuyThreshold) {
 				needsBuy = true
+			} else {
+				if matchedOrderID != "" {
+					session.AutoBuyOrderID = matchedOrderID
+					h.sessions.Set(userID, session)
+					log.Printf("[AutoBuy] Discovered active OrderID: %s for user %d", matchedOrderID, userID)
+				}
 			}
 		}
 
@@ -263,6 +302,12 @@ func (h *Handler) runAutoBuyMonitor(ctx context.Context, b *gotgbot.Bot, chatID,
 				ReplyMarkup: kbAutoRunning(),
 			})
 			continue
+		}
+
+		if result.OrderID != "" {
+			session.AutoBuyOrderID = result.OrderID
+			h.sessions.Set(userID, session)
+			log.Printf("[AutoBuy] Updated tracked OrderID to %s for user %d", result.OrderID, userID)
 		}
 
 		_, _ = b.SendMessage(chatID, fmt.Sprintf("✅ *Auto-Buy Berhasil!*\n\n%s", telkomsel.FormatPurchaseResult(result, "AIRTIME")), &gotgbot.SendMessageOpts{

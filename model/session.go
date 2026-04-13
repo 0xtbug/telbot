@@ -52,6 +52,7 @@ type Session struct {
 	AutoBuyPackage   string `json:"auto_buy_package"`
 	AutoBuyPayment   string `json:"auto_buy_payment"`
 	AutoBuyActive    bool   `json:"auto_buy_active"`
+	AutoBuyOrderID   string `json:"auto_buy_order_id,omitempty"`
 }
 
 func (s *Session) IsLoggedIn() bool {

@@ -71,6 +71,7 @@ func CopyAutoBuyConfig(old, new *model.Session) {
 	new.AutoBuyPackage = old.AutoBuyPackage
 	new.AutoBuyPayment = old.AutoBuyPayment
 	new.AutoBuyActive = old.AutoBuyActive
+	new.AutoBuyOrderID = old.AutoBuyOrderID
 	new.PendingOfferID = old.PendingOfferID
 	new.PendingPayment = old.PendingPayment
 }

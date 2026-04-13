@@ -71,6 +71,7 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			msg.session.AutoBuyPackage = existing.AutoBuyPackage
 			msg.session.AutoBuyPayment = existing.AutoBuyPayment
 			msg.session.AutoBuyActive = existing.AutoBuyActive
+			msg.session.AutoBuyOrderID = existing.AutoBuyOrderID
 			msg.session.PendingOfferID = existing.PendingOfferID
 			msg.session.PendingPayment = existing.PendingPayment
 		}
