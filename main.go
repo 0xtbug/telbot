@@ -67,6 +67,8 @@ func printHelp() {
 	fmt.Println("Environment variables:")
 	fmt.Println("  TELKOMSEL_BOT_TOKEN    Telegram bot token (required for --bot)")
 	fmt.Println("  TELEGRAM_ADMIN_ID      Telegram admin user ID (required for --bot)")
+	fmt.Println("  OTP_WEBHOOK_PORT       Port for OTP webhook receiver (optional, e.g., 8080)")
+	fmt.Println("  OTP_WEBHOOK_SECRET     Secret token to verify webhook payloads (optional)")
 }
 
 func runBot() {
