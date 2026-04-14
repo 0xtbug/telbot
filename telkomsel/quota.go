@@ -11,9 +11,10 @@ import (
 type BonusItem struct {
 	Name           string `json:"name"`
 	BucketDesc     string `json:"bucketdescription"`
-	RemainingQuota string `json:"remainingquota"`
-	ExpiryDate     string `json:"expirydate"`
-	OrderID        string `json:"order_id"`
+	RemainingQuota      string  `json:"remainingquota"`
+	RemainingQuotaValue float64 `json:"remainingquotaValue"`
+	ExpiryDate          string  `json:"expirydate"`
+	OrderID             string  `json:"order_id"`
 }
 
 type BonusGroup struct {
@@ -38,10 +39,11 @@ type QuotaGroup struct {
 }
 
 type QuotaItem struct {
-	Name      string
-	Remaining string
-	Expiry    string
-	OrderID   string
+	Name           string
+	Remaining      string
+	RemainingValue float64
+	Expiry         string
+	OrderID        string
 }
 
 func (c *Client) CheckQuota(ctx context.Context, session *model.Session) (*QuotaInfo, error) {
@@ -77,10 +79,11 @@ func (c *Client) CheckQuota(ctx context.Context, session *model.Session) (*Quota
 				name = item.BucketDesc
 			}
 			group.Items = append(group.Items, QuotaItem{
-				Name:      name,
-				Remaining: item.RemainingQuota,
-				Expiry:    item.ExpiryDate,
-				OrderID:   item.OrderID,
+				Name:           name,
+				Remaining:      item.RemainingQuota,
+				RemainingValue: item.RemainingQuotaValue,
+				Expiry:         item.ExpiryDate,
+				OrderID:        item.OrderID,
 			})
 		}
 		info.Groups = append(info.Groups, group)

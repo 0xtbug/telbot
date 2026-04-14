@@ -12,7 +12,6 @@ import (
 
 	"telkomsel-bot/otp"
 	"telkomsel-bot/telkomsel"
-	"telkomsel-bot/util"
 )
 
 func (h *Handler) cbShowAutoMonitor(b *gotgbot.Bot, chatID, msgID, userID int64) {
@@ -66,7 +65,7 @@ func (h *Handler) cbSetAutoThreshold(b *gotgbot.Bot, chatID, msgID, userID int64
 	}
 
 	h.editMsg(b, chatID, msgID, "⏳ Mengambil rekomendasi paket...", nil)
-	
+
 	apiCtx := context.Background()
 	offers, _ := h.api.GetRecommendedOffers(apiCtx, session)
 
@@ -225,8 +224,8 @@ func (h *Handler) runAutoBuyMonitor(ctx context.Context, b *gotgbot.Bot, chatID,
 		needsBuy := false
 		var matchedOrderID string
 
+		var trackedItem *telkomsel.QuotaItem
 		if session.AutoBuyOrderID != "" {
-			var trackedItem *telkomsel.QuotaItem
 			for _, group := range quota.Groups {
 				for _, item := range group.Items {
 					if item.OrderID == session.AutoBuyOrderID {
@@ -240,41 +239,76 @@ func (h *Handler) runAutoBuyMonitor(ctx context.Context, b *gotgbot.Bot, chatID,
 					break
 				}
 			}
+		}
 
-			if trackedItem == nil {
-				log.Printf("[AutoBuy] Tracked OrderID %s not found for user %d. Assuming depleted.", session.AutoBuyOrderID, userID)
+		if trackedItem != nil {
+			log.Printf("[AutoBuy] Tracked OrderID %s found for user %d: %.2f MB remaining", session.AutoBuyOrderID, userID, trackedItem.RemainingValue)
+			if trackedItem.RemainingValue <= float64(session.AutoBuyThreshold) {
+				log.Printf("[AutoBuy] Tracked quota (%.2f MB) <= threshold (%d MB) for user %d", trackedItem.RemainingValue, session.AutoBuyThreshold, userID)
 				needsBuy = true
-			} else {
-				log.Printf("[AutoBuy] Tracked OrderID %s found for user %d: %s remaining", session.AutoBuyOrderID, userID, trackedItem.Remaining)
-				if util.ParseQuotaToMB(trackedItem.Remaining) <= float64(session.AutoBuyThreshold) {
-					needsBuy = true
-				}
 			}
 		} else {
+			if session.AutoBuyOrderID != "" {
+				log.Printf("[AutoBuy] Tracked OrderID %s not found for user %d. Falling back to class tracking.", session.AutoBuyOrderID, userID)
+				session.AutoBuyOrderID = ""
+			}
+
 			var totalTargetQuota float64
 			hasTargetGroup := false
-			
+
 			targetClass := "Internet"
 			if session.AutoBuyPackage == "ilmupedia" || offerID == "" {
 				targetClass = "ENTERTAINMENT"
 			}
 
 			for _, group := range quota.Groups {
-				if strings.EqualFold(group.Class, targetClass) {
-					for _, item := range group.Items {
-						if targetClass == "ENTERTAINMENT" && !strings.Contains(strings.ToLower(item.Name), "belajar") {
+				isGroupTarget := strings.EqualFold(group.Class, targetClass)
+				if !isGroupTarget && targetClass == "Internet" && strings.Contains(strings.ToLower(group.Class), "internet") {
+					isGroupTarget = true
+				}
+
+				for _, item := range group.Items {
+					if targetClass == "ENTERTAINMENT" {
+						if !strings.EqualFold(group.Class, "ENTERTAINMENT") {
 							continue
 						}
-						hasTargetGroup = true
-						totalTargetQuota += util.ParseQuotaToMB(item.Remaining)
-						if item.OrderID != "" {
-							matchedOrderID = item.OrderID
+						if !strings.Contains(strings.ToLower(item.Name), "belajar") {
+							continue
 						}
+					} else {
+						isItemTarget := isGroupTarget || strings.Contains(strings.ToLower(item.Name), "internet") || strings.Contains(strings.ToLower(item.Name), "flash")
+						if !isItemTarget {
+							continue
+						}
+					}
+
+					hasTargetGroup = true
+					totalTargetQuota += item.RemainingValue
+					if item.OrderID != "" {
+						matchedOrderID = item.OrderID
 					}
 				}
 			}
 
-			if !hasTargetGroup || totalTargetQuota <= float64(session.AutoBuyThreshold) {
+			if !hasTargetGroup && targetClass == "Internet" {
+				for _, group := range quota.Groups {
+					if strings.EqualFold(group.Class, "ENTERTAINMENT") {
+						for _, item := range group.Items {
+							hasTargetGroup = true
+							totalTargetQuota += item.RemainingValue
+						}
+					}
+				}
+				if hasTargetGroup {
+					log.Printf("[AutoBuy] User %d has 0 Internet quota but has %.2f MB Entertainment quota. Falling back to tracking Entertainment.", userID, totalTargetQuota)
+				}
+			}
+
+			if !hasTargetGroup {
+				log.Printf("[AutoBuy] No target quota (%s) found for user %d. Assuming depleted.", targetClass, userID)
+				needsBuy = true
+			} else if totalTargetQuota <= float64(session.AutoBuyThreshold) {
+				log.Printf("[AutoBuy] Total target quota (%.2f MB) <= threshold (%d MB) for user %d", totalTargetQuota, session.AutoBuyThreshold, userID)
 				needsBuy = true
 			} else {
 				if matchedOrderID != "" {
@@ -285,13 +319,18 @@ func (h *Handler) runAutoBuyMonitor(ctx context.Context, b *gotgbot.Bot, chatID,
 			}
 		}
 
+		// Commenting out airtime expiry trigger since it causes unintended quota purchases
+		// when user only wants to monitor quota limit.
+		/*
 		_, expiry, balErr := h.api.GetBalance(apiCtx, session)
 		if balErr == nil && expiry != "" {
 			expiryTime, parseErr := time.Parse("2006-01-02", expiry)
 			if parseErr == nil && time.Now().After(expiryTime) {
-				needsBuy = true
+				log.Printf("[AutoBuy] Airtime expired (%s) for user %d, triggering purchase", expiry, userID)
+				// needsBuy = true -> disabled specifically so threshold works
 			}
 		}
+		*/
 
 		if !needsBuy {
 			log.Printf("[AutoBuy] Quota OK for user %d, skipping purchase", userID)
