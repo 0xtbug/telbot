@@ -65,7 +65,12 @@ func (h *Handler) cbSetAutoThreshold(b *gotgbot.Bot, chatID, msgID, userID int64
 		threshStr = "Habis (0 MB)"
 	}
 
-	kb := kbAutoPackage()
+	h.editMsg(b, chatID, msgID, "⏳ Mengambil rekomendasi paket...", nil)
+	
+	apiCtx := context.Background()
+	offers, _ := h.api.GetRecommendedOffers(apiCtx, session)
+
+	kb := kbAutoPackage(offers)
 	h.editMsg(b, chatID, msgID, fmt.Sprintf("✅ Interval: *%d menit*\n📉 Batas Kuota: *%s*\n\n📦 Pilih paket untuk auto-buy:", session.AutoBuyInterval, threshStr), &kb)
 }
 

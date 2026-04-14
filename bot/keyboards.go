@@ -117,16 +117,29 @@ func kbAutoThreshold() gotgbot.InlineKeyboardMarkup {
 	}
 }
 
-func kbAutoPackage() gotgbot.InlineKeyboardMarkup {
-	return gotgbot.InlineKeyboardMarkup{
-		InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
-			{
-				{Text: "📚 Ilmupedia", CallbackData: "auto_pkg_ilmupedia"},
-				{Text: "🆔 Custom Id", CallbackData: "auto_pkg_custom"},
-			},
-			{{Text: "🔙 Kembali", CallbackData: "auto_buy"}},
-		},
+func kbAutoPackage(offers []telkomsel.RecommendedOffer) gotgbot.InlineKeyboardMarkup {
+	var rows [][]gotgbot.InlineKeyboardButton
+
+	for _, o := range offers {
+		label := fmt.Sprintf("📦 %s - Rp%s", o.Name, o.Price)
+		if len(label) > 64 {
+			label = label[:61] + "..."
+		}
+		rows = append(rows, []gotgbot.InlineKeyboardButton{
+			{Text: label, CallbackData: "auto_pkg_offer_" + o.ID},
+		})
 	}
+
+	rows = append(rows,
+		[]gotgbot.InlineKeyboardButton{
+			{Text: "🆔 Custom Id", CallbackData: "auto_pkg_custom"},
+		},
+		[]gotgbot.InlineKeyboardButton{
+			{Text: "🔙 Kembali", CallbackData: "auto_buy"},
+		},
+	)
+
+	return gotgbot.InlineKeyboardMarkup{InlineKeyboard: rows}
 }
 
 func kbAutoPay() gotgbot.InlineKeyboardMarkup {

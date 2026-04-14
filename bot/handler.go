@@ -197,6 +197,10 @@ func (h *Handler) handleCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 	case data == "auto_pkg_ilmupedia":
 		h.cbSetAutoPackage(b, chatID, msgID, userID, "ilmupedia")
 
+	case strings.HasPrefix(data, "auto_pkg_offer_"):
+		offerID := strings.TrimPrefix(data, "auto_pkg_offer_")
+		h.cbSetAutoPackage(b, chatID, msgID, userID, offerID)
+
 	case data == "auto_pkg_custom":
 		h.editMsg(b, chatID, msgID, "🆔 Kirim Offer ID paket untuk auto-buy.\n\nContoh: `0fc00fd41bcd26376d806925d746705e`", nil)
 		session := h.sessions.Get(userID)
@@ -286,7 +290,9 @@ func (h *Handler) handleMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 			threshStr = "Habis (0 MB)"
 		}
 
-		kb := kbAutoPackage()
+		apiCtx := context.Background()
+		offers, _ := h.api.GetRecommendedOffers(apiCtx, session)
+		kb := kbAutoPackage(offers)
 		_, err := ctx.EffectiveMessage.Reply(b, fmt.Sprintf("✅ Interval: *%d menit*\n📉 Batas Kuota: *%s*\n\n📦 Pilih paket untuk auto-buy:", session.AutoBuyInterval, threshStr), &gotgbot.SendMessageOpts{
 			ParseMode:   "Markdown",
 			ReplyMarkup: kb,
